@@ -2,7 +2,7 @@ name: Checkov Security Scan
 
 on:
   pull_request:
-    types: [opened, synchronize, reopened]
+    types: [opened ]
   push:
     branches:
       - dev
@@ -31,8 +31,7 @@ jobs:
           output_file_path: checkov-results.sarif
           soft_fail: true
           download_external_modules: true
-          skip_check: |
-            CKV_AWS_79  # Skip EKS endpoint public access check if not applicable
+          skip_check: CKV_AWS_79
           quiet: false
 
       - name: Upload SARIF results to GitHub Security
