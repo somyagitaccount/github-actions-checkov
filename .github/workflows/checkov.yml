@@ -29,15 +29,14 @@ jobs:
           directory: projects/
           framework: terraform
           output_format: cli,sarif
-          output_file_path: checkov-results.sarif
           soft_fail: true
           skip_check: CKV_AWS_79
 
       - name: Upload SARIF to GitHub Security
-        uses: github/codeql-action/upload-sarif@v3
         if: always()
+        uses: github/codeql-action/upload-sarif@v3
         with:
-          sarif_file: checkov-results.sarif
+          sarif_file: results.sarif
 
       - name: Comment PR with Checkov summary
         if: github.event_name == 'pull_request'
@@ -45,29 +44,10 @@ jobs:
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
-            const fs = require('fs');
+            const summary = `## 🔒 Checkov Security Scan Results
 
-            const output = fs.readFileSync('checkov-results.sarif', 'utf8');
-            const sarif = JSON.parse(output);
-
-            let passed = 0;
-            let failed = 0;
-
-            for (const run of sarif.runs || []) {
-              for (const result of run.results || []) {
-                if (result.level === 'error') failed++;
-                else passed++;
-              }
-            }
-
-            let body = `## 🔒 Checkov Security Scan Results
-
-            ✅ **Passed checks:** ${passed}
-            ❌ **Failed checks:** ${failed}
-
-            ${failed > 0
-              ? '⚠️ **Security issues detected. Please review before merging.**'
-              : '✅ **No security issues found.**'}
+            ✅ Checkov scan completed.
+            📊 View full results in **GitHub Security → Code scanning alerts**
 
             ---
             *Scan performed by Checkov on commit \`${context.sha}\`*`;
@@ -87,13 +67,13 @@ jobs:
                 owner: context.repo.owner,
                 repo: context.repo.repo,
                 comment_id: existing.id,
-                body,
+                body: summary,
               });
             } else {
               await github.rest.issues.createComment({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
                 issue_number: context.issue.number,
-                body,
+                body: summary,
               });
             }
